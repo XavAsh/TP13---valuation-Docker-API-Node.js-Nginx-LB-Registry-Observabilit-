@@ -16,10 +16,10 @@ Stack Docker complète : API Node.js (Express + prom-client), reverse proxy Ngin
 L'API Node.js (`api/app.js`) expose :
 
 - `GET /` → `{ hostname, pet, requests }` (compteur incrémenté à chaque requête).
-![curl GET / via nginx](./captures/Screenshot_2026-05-20_15-34-52.png)
-
+  ![curl GET / via nginx](./captures/Screenshot_2026-05-20_15-34-52.png)
 
 - `GET /healthz` → `{ "status": "ok" }`, HTTP 200.
+
 - `GET /metrics` → métriques Prometheus exposées via `prom-client`.
 
 Le Dockerfile (`api/Dockerfile`) utilise `node:20-alpine`, exécute l'application en utilisateur non-root (`nodeuser`), installe les dépendances avec `npm install --only=production` et configure un `HEALTHCHECK` sur `/healthz`.
@@ -28,11 +28,11 @@ Le fichier `.dockerignore` exclut `node_modules`, `.env`, `.git` et `npm-debug.l
 
 **Preuve `GET /` :**
 
-![curl GET /](./captures/partie1-curl-root.png)
+![curl GET /](./captures/Screenshot_2026-05-20_15-53-17.png)
 
 **Preuve `GET /healthz` :**
 
-![curl GET /healthz](./captures/partie1-curl-healthz.png)
+![curl GET /healthz](./captures/Screenshot_2026-05-20_15-51-11.png)
 
 ---
 
@@ -45,14 +45,14 @@ L'image API est buildée puis poussée vers `127.0.0.1:5000/mon-api:1.0.0`, et l
 ```yaml
 services:
   cat:
-    image: ${API_IMAGE_LOCAL}   # localhost:5000/mon-api:1.0.0
+    image: ${API_IMAGE_LOCAL} # localhost:5000/mon-api:1.0.0
 ```
 
 **Image listée dans le registry privé :**
 
 ![registry catalog](./captures/Screenshot_2026-05-20_15-06-19.png)
 
-Capture de l'API du registry exposant le repository `mon-api`. L'interface web Joxit (`http://127.0.0.1:8081`) est également disponible mais bindée localement pour la sécurité.
+Capture de l'API du registry exposant le repository `mon-api`.
 
 ---
 
@@ -127,15 +127,15 @@ Le `.dockerignore` empêche `node_modules` d'entrer dans le contexte de build.
 
 **`docker compose ps` tous services Up (healthy) :**
 
-![docker compose ps healthy](./captures/partie5-compose-ps.png)
+![docker compose ps healthy](./captures/Screenshot_2026-05-20_16-07-08.png)
 
 **Load balancing round-robin sur `/`** (deux appels successifs, hostnames différents) :
 
-![round robin /](./captures/partie5-roundrobin.png)
+![round robin /](./captures/Screenshot_2026-05-20_16-11-07.png)
 
 **`/cat` → `PET: cat`, `/dog` → `PET: dog`** avec compteurs distincts :
 
-![/cat et /dog](./captures/partie5-cat-dog.png)
+![/cat et /dog](./captures/Screenshot_2026-05-20_16-13-36.png)
 
 ---
 
@@ -208,11 +208,11 @@ docker compose --env-file .env \
 
 **Dashboard Grafana provisionné :**
 
-![grafana dashboard](./captures/partie7-grafana-dashboard.png)
+![grafana dashboard](./captures/Screenshot_2026-05-20_16-23-46.png)
 
 **Portainer accessible :**
 
-![portainer](./captures/partie7-portainer.png)
+![portainer](./captures/Screenshot_2026-05-20_16-16-01.png)
 
 ---
 
@@ -263,18 +263,18 @@ Run `#10` (`fixed ports`) — toutes les étapes vertes : build, Trivy CRITICAL,
 
 Stack accessible publiquement sur **`78.138.58.50`** :
 
-| Service | URL |
-|---------|-----|
-| API (Nginx LB) | http://78.138.58.50:40110/ |
-| `/cat` | http://78.138.58.50:40110/cat |
-| `/dog` | http://78.138.58.50:40110/dog |
-| Prometheus | http://78.138.58.50:40112/ |
-| Grafana | http://78.138.58.50:40111/ (admin/admin) |
-| Portainer | http://78.138.58.50:40115/ |
+| Service        | URL                                              |
+| -------------- | ------------------------------------------------ |
+| API (Nginx LB) | http://78.138.58.50:40110/                       |
+| `/cat`         | http://78.138.58.50:40110/cat                    |
+| `/dog`         | http://78.138.58.50:40110/dog                    |
+| Prometheus     | http://78.138.58.50:40112/                       |
+| Grafana        | http://78.138.58.50:40111/ (admin/admin)         |
+| Portainer      | http://78.138.58.50:40115/ (admin/admin123456789 |
 
 **`docker compose ps` sur le VPS — tous services Up (healthy) :**
 
-![vps docker compose ps](./captures/partie10-vps-ps.png)
+![vps docker compose ps](./captures/Screenshot_2026-05-20_16-07-08.png)
 
 ---
 
