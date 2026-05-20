@@ -38,7 +38,7 @@ Le fichier `.dockerignore` exclut `node_modules`, `.env`, `.git` et `npm-debug.l
 
 ## Partie 2 — Registry privé
 
-`docker-compose.registry.yml` lance un service `registry:2` et l'interface `joxit/docker-registry-ui`, tous deux bindés sur `127.0.0.1` (registry interne, pas d'exposition publique).
+`docker-compose.registry.yml` lance un service `registry:2` et l'interface `joxit/docker-registry-ui`. Les binds IP sont configurables via `.env` (`REGISTRY_BIND_IP`, `REGISTRY_UI_BIND_IP`) : le registry peut rester local tandis que l'UI peut etre exposée.
 
 L'image API est buildée puis poussée vers `127.0.0.1:5000/mon-api:1.0.0`, et le `docker-compose.yml` principal référence cette image via la variable `${API_IMAGE_LOCAL}` :
 
