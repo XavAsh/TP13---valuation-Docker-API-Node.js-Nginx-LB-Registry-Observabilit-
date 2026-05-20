@@ -19,8 +19,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set short SHA
-        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "${GITHUB_ENV}"
+      - name: Set short SHA and lowercase GHCR owner
+        run: |
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> "${GITHUB_ENV}"
+          echo "IMAGE_OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "${GITHUB_ENV}"
 
       - name: Build API image
         run: |
@@ -43,6 +45,7 @@ jobs:
 
       - name: Push image to GHCR
         run: |
-          TARGET_IMAGE="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:git-${SHORT_SHA}"
+          TARGET_IMAGE="ghcr.io/${IMAGE_OWNER_LC}/${IMAGE_NAME}:git-${SHORT_SHA}"
           docker tag "${IMAGE_NAME}:git-${SHORT_SHA}" "${TARGET_IMAGE}"
           docker push "${TARGET_IMAGE}"
+          echo "Pushed ${TARGET_IMAGE}"
