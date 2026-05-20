@@ -1,0 +1,113 @@
+services:
+  cat:
+    image: ${API_IMAGE_LOCAL}
+    container_name: tp13_cat
+    environment:
+      API_PORT: ${API_PORT}
+      PET: ${PET_CAT}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:${API_PORT}/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
+  dog:
+    image: ${API_IMAGE_LOCAL}
+    container_name: tp13_dog
+    environment:
+      API_PORT: ${API_PORT}
+      PET: ${PET_DOG}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:${API_PORT}/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: tp13_nginx
+    ports:
+      - "${NGINX_PORT}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      cat:
+        condition: service_healthy
+      dog:
+        condition: service_healthy
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: tp13_prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      cat:
+        condition: service_healthy
+      dog:
+        condition: service_healthy
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: tp13_grafana
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: tp13_node_exporter
+    ports:
+      - "${NODE_EXPORTER_PORT}:9100"
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: tp13_cadvisor
+    ports:
+      - "${CADVISOR_PORT}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
+networks:
+  tp13_net:
+    driver: bridge
+
+volumes:
+  grafana_data:
