@@ -88,8 +88,19 @@ jobs:
             echo "=== docker pull ${IMAGE} ==="
             docker pull "${IMAGE}" || { echo "ERROR: docker pull failed (check API_IMAGE_PUBLIC in .env and GHCR visibility)"; exit 1; }
 
+            echo "=== cleanup old stacks and port conflicts ==="
+            docker compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
+            docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+            docker rm -f tp13_grafana tp13_prometheus tp13_nginx tp13_cat tp13_dog \
+              tp13_node_exporter tp13_cadvisor tp13_registry tp13_registry_ui 2>/dev/null || true
+            for cid in $(docker ps -q --filter "publish=3001"); do docker rm -f "${cid}"; done
+            for cid in $(docker ps -q --filter "publish=9090"); do
+              name=$(docker inspect -f '{{.Name}}' "${cid}" | tr -d '/')
+              echo "${name}" | grep -q 'grafana' && docker rm -f "${cid}" || true
+            done
+
             echo "=== docker compose up ==="
-            docker compose --env-file .env -f docker-compose.prod.yml up -d --pull always
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --pull always --remove-orphans
             docker compose -f docker-compose.prod.yml ps
 
             NGINX_PORT="$(grep -E '^NGINX_PORT=' .env | cut -d= -f2 | tr -d ' \r')"
