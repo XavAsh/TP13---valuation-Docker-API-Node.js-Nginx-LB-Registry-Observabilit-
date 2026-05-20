@@ -30,7 +30,7 @@ jobs:
             api
 
       - name: Scan image with Trivy (CRITICAL only)
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: "${{ env.IMAGE_NAME }}:git-${{ env.SHORT_SHA }}"
           format: table
