@@ -89,10 +89,9 @@ jobs:
             docker pull "${IMAGE}" || { echo "ERROR: docker pull failed (check API_IMAGE_PUBLIC in .env and GHCR visibility)"; exit 1; }
 
             echo "=== cleanup old stacks and port conflicts ==="
-            docker compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
-            docker rm -f tp13_grafana tp13_prometheus tp13_nginx tp13_cat tp13_dog \
-              tp13_node_exporter tp13_cadvisor tp13_registry tp13_registry_ui tp13_portainer 2>/dev/null || true
+            docker compose --project-name tp13 --env-file .env -f docker-compose.yml down --remove-orphans 2>/dev/null || true
+            docker compose --project-name tp13 --env-file .env -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+            for cid in $(docker ps -aq --filter "name=^/tp13_"); do docker rm -f "${cid}" 2>/dev/null || true; done
             for port in 80 8080 3001 9090 9100 8082 40110 40111 40112 40113 40114 40115; do
               for cid in $(docker ps -q --filter "publish=${port}"); do docker rm -f "${cid}"; done
             done
@@ -100,8 +99,8 @@ jobs:
             echo "=== docker compose up (base + prod override) ==="
             # Override API images to use GHCR instead of local registry for production
             export API_IMAGE_LOCAL="${IMAGE}"
-            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --pull always --remove-orphans
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+            docker compose --project-name tp13 --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --pull always --remove-orphans
+            docker compose --project-name tp13 -f docker-compose.yml -f docker-compose.prod.yml ps
 
             NGINX_PORT="$(grep -E '^NGINX_PORT=' .env | cut -d= -f2 | tr -d ' \r')"
             NGINX_PORT="${NGINX_PORT:-80}"
