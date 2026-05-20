@@ -53,25 +53,65 @@ jobs:
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+          GIT_SHA: ${{ env.SHORT_SHA }}
+          IMAGE: ghcr.io/${{ env.IMAGE_OWNER_LC }}/${{ env.IMAGE_NAME }}:git-${{ env.SHORT_SHA }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: 22
+          command_timeout: 10m
+          debug: true
           script_stop: true
+          envs: DEPLOY_PATH,GIT_SHA,IMAGE
           script: |
-            set -eu
-            cd "${{ secrets.VPS_DEPLOY_PATH }}"
-            export GIT_SHA="${{ env.SHORT_SHA }}"
-            set -a
-            . ./.env
-            set +a
-            if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
-              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ env.IMAGE_OWNER_LC }}" --password-stdin
-            fi
-            docker compose --env-file .env -f docker-compose.prod.yml pull cat dog
-            docker compose --env-file .env -f docker-compose.prod.yml up -d
+            set -ex
+            echo "=== TP13 deploy start ==="
+            echo "Host: $(hostname)"
+            echo "DEPLOY_PATH=${DEPLOY_PATH}"
+            echo "GIT_SHA=${GIT_SHA}"
+            echo "IMAGE=${IMAGE}"
+
+            cd "${DEPLOY_PATH}" || { echo "ERROR: cannot cd to ${DEPLOY_PATH}"; exit 1; }
+            test -f .env || { echo "ERROR: .env missing in ${DEPLOY_PATH}"; exit 1; }
+            test -f docker-compose.prod.yml || { echo "ERROR: docker-compose.prod.yml missing"; exit 1; }
+
+            docker --version
+            docker compose version
+
+            echo "=== .env API_IMAGE_PUBLIC ==="
+            grep -E '^API_IMAGE_PUBLIC=' .env || true
+
+            export GIT_SHA="${GIT_SHA}"
+            echo "=== docker pull ${IMAGE} ==="
+            docker pull "${IMAGE}" || { echo "ERROR: docker pull failed (check API_IMAGE_PUBLIC in .env and GHCR visibility)"; exit 1; }
+
+            echo "=== docker compose up ==="
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --pull always
             docker compose -f docker-compose.prod.yml ps
-            echo "Deployed ghcr.io/${{ env.IMAGE_OWNER_LC }}/${{ env.IMAGE_NAME }}:git-${GIT_SHA}"
-            curl -sf "http://127.0.0.1:${NGINX_PORT}/"
-            echo "Smoke test OK"
+
+            NGINX_PORT="$(grep -E '^NGINX_PORT=' .env | cut -d= -f2 | tr -d ' \r')"
+            NGINX_PORT="${NGINX_PORT:-80}"
+            echo "=== smoke test on port ${NGINX_PORT} ==="
+
+            ok=0
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -sf "http://127.0.0.1:${NGINX_PORT}/" >/dev/null; then
+                echo "Smoke test OK (attempt ${i})"
+                curl -s "http://127.0.0.1:${NGINX_PORT}/"
+                ok=1
+                break
+              fi
+              echo "Waiting for nginx/API... attempt ${i}/10"
+              sleep 3
+            done
+
+            if [ "${ok}" -ne 1 ]; then
+              echo "ERROR: smoke test failed on port ${NGINX_PORT}"
+              docker compose -f docker-compose.prod.yml logs --tail=80 nginx cat dog
+              exit 1
+            fi
+
+            echo "=== deploy finished ==="
