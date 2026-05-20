@@ -1,95 +1,40 @@
-# TP13 - Docker Stack
+TP13 : Évaluation Docker
 
-## Partie 1 - API & Dockerfile
+Partie 1
 
-API Node.js (Express) avec:
-- `GET /` retourne `hostname`, `pet`, `requests`.
-- `GET /healthz` retourne `{ "status": "ok" }`.
-- `GET /metrics` expose les métriques Prometheus (`prom-client`).
+Partie 2
 
-Build API:
+Rendu attendu pour cette partie : une capture d'écran de l'interface web (http://localhost:8080) montrant votre image listée dans le registry, et le champ image: de votre docker-compose.yml principal pointant vers localhost:5000/... (visible dans le fichier versionné dans le repo).
 
-```bash
-docker build -t mon-api:1.0.0 -f api/Dockerfile api
-```
+Partie 3
 
-## Partie 2 - Registry privé local
+Partie 4
 
-Lancer le registry et l'UI:
+Rendu attendu pour cette partie : une capture d'écran d'une partie de la sortie de trivy image <votre-image> dans le dossier captures/, et la justification du choix d'image.
 
-```bash
-docker compose --env-file .env -f docker-compose.registry.yml up -d
-```
+Partie 5
 
-Tag + push de l'image API:
+Rendu attendu pour cette partie : quatre captures d'écran dans le dossier captures/, correspondant aux critères ci-dessous.
 
-```bash
-docker tag mon-api:1.0.0 localhost:5000/mon-api:1.0.0
-docker push localhost:5000/mon-api:1.0.0
-```
+Partie 6 Questions
 
-## Partie 3 - Stack principale
+    Question Swarm (1 pt) : Expliquez la différence entre docker compose up et docker stack deploy. Pourquoi la directive build: n'est-elle pas utilisable dans une stack déployée en mode Swarm ?
+    Question Secrets (1 pt) : Expliquez la différence entre passer un mot de passe via une variable d'environnement et via un Docker Secret. Dans quel fichier le secret est-il accessible à l'intérieur du conteneur, et comment le lire depuis du code Node.js ?
+    Question Backup (1 pt) : Dans une architecture Docker en production, quels éléments faut-il impérativement sauvegarder pour pouvoir reconstruire entièrement la stack après une panne ? Distinguez ce qui est recréable automatiquement de ce qui est irremplaçable.
 
-Lancer la stack:
+Partie 8
 
-```bash
-docker compose --env-file .env -f docker-compose.yml up -d
-```
+Rendu attendu pour cette partie : une capture de docker volume ls montrant les volumes nommés de votre stack, et une capture de docker volume inspect <volume> sur l'un d'eux.
 
-Tests rapides:
-- `curl http://localhost:${NGINX_PORT}/` (round-robin cat/dog)
-- `curl http://localhost:${NGINX_PORT}/cat` (toujours cat)
-- `curl http://localhost:${NGINX_PORT}/dog` (toujours dog)
+Partie 9
 
-## Partie 4 - Variables d'environnement et sécurité
+Rendu attendu pour cette partie : le fichier .github/workflows/docker.yml versioné dans le dépôt, et une capture d'écran de l'onglet Actions de GitHub montrant le pipeline en succès (ou en échec justifié si des CVE CRITICAL sont présentes).
 
-Toutes les variables sont dans `.env`.
+Partie 10
 
-Scan Trivy:
+Si l'ensemble de votre stack est déployée et accessible depuis un VPS (serveur distant), vous obtenez les points de cette partie. Fournissez l'URL ou l'IP publique dans le README.md, ainsi qu'une capture montrant la stack fonctionnelle depuis le serveur.
 
-```bash
-trivy image --severity CRITICAL --ignore-unfixed localhost:5000/mon-api:1.0.0
-```
+Partie 11
 
-Justification image de base:
-- `node:20-alpine` est plus légère que `node:latest`.
-- Surface d'attaque plus petite.
-- En pratique, le nombre de CVE est généralement inférieur à une image `latest` plus large (à confirmer via scan local Trivy dans votre environnement).
-
-## Partie 7 - Observabilité
-
-Services inclus:
-- Prometheus
-- Grafana
-- node-exporter
-- cadvisor
-
-Endpoints utiles:
-- Prometheus: `http://localhost:${PROMETHEUS_PORT}`
-- Grafana: `http://localhost:${GRAFANA_PORT}`
-
-## Partie 8 - Volumes
-
-- Volumes nommés: `registry_data`, `grafana_data`.
-- Bind mounts: configs Nginx, Prometheus et provisioning Grafana.
-
-## Partie 9 - CI/CD GitHub Actions
-
-Workflow: `.github/workflows/docker.yml`
-- Trigger: push sur `main`
-- Build image API
-- Trivy CRITICAL (fail pipeline si vulnérabilités)
-- Push vers GHCR avec tag `git-<short_sha>`
-
-## Partie 10 - VPS
-
-Déploiement production:
-
-```bash
-export GIT_SHA=<short_sha>
-docker compose --env-file .env -f docker-compose.prod.yml up -d
-```
-
-À compléter après déploiement:
-- URL/IP publique: `<A_COMPLETER>`
-- Capture d'écran de la stack depuis le VPS: `captures/<A_COMPLETER>.png`
+Clarté & lisibilité du README
+Le README.md est le fichier rendu qui centralise votre travail. Il doit être structuré, lisible et permettre de retrouver rapidement les preuves attendues.
