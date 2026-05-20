@@ -6,7 +6,7 @@ services:
       - "${REGISTRY_PORT}:5000"
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
-      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '["http://localhost:${REGISTRY_UI_PORT}","http://${REGISTRY_PUBLIC_HOST}:${REGISTRY_UI_PORT}"]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '["http://localhost:8081","http://78.138.58.50:8081"]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods: '["HEAD", "GET", "OPTIONS", "DELETE"]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers: '["Authorization", "Accept", "Cache-Control"]'
       REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers: '["Docker-Content-Digest"]'
