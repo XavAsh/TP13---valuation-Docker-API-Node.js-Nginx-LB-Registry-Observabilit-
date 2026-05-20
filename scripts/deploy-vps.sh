@@ -6,5 +6,6 @@ if [ -z "${GIT_SHA:-}" ]; then
   exit 1
 fi
 
+docker compose --env-file .env -f docker-compose.prod.yml pull cat dog
 docker compose --env-file .env -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml ps
