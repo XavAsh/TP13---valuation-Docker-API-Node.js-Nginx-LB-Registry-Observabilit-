@@ -105,9 +105,22 @@ services:
       - tp13_net
     restart: unless-stopped
 
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: tp13_portainer
+    ports:
+      - "${PORTAINER_PORT}:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - tp13_net
+    restart: unless-stopped
+
 networks:
   tp13_net:
     driver: bridge
 
 volumes:
   grafana_data:
+  portainer_data:
