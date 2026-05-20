@@ -53,6 +53,7 @@ services:
 ![registry catalog](./captures/Screenshot_2026-05-20_15-06-19.png)
 
 Capture de l'API du registry exposant le repository `mon-api`.
+![interface web registry-ui](./captures/Screenshot_2026-05-20_17-07-42.png)
 
 ---
 
