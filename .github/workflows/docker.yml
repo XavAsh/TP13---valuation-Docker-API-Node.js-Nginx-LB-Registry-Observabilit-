@@ -26,8 +26,8 @@ jobs:
         run: |
           docker build \
             -t "${IMAGE_NAME}:git-${SHORT_SHA}" \
-            -f tp13/api/Dockerfile \
-            tp13/api
+            -f api/Dockerfile \
+            api
 
       - name: Scan image with Trivy (CRITICAL only)
         uses: aquasecurity/trivy-action@0.24.0

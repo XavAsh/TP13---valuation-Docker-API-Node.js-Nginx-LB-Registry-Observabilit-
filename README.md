@@ -2,6 +2,8 @@ TP13 : Évaluation Docker
 
 Partie 1
 
+![curl http://127.0.0.1/](./captures/Screenshot_2026-05-20_13-18-33.png)
+
 Partie 2
 
 Rendu attendu pour cette partie : une capture d'écran de l'interface web (http://localhost:8080) montrant votre image listée dans le registry, et le champ image: de votre docker-compose.yml principal pointant vers localhost:5000/... (visible dans le fichier versionné dans le repo).
